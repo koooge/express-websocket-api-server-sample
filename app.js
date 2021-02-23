@@ -2,6 +2,8 @@ var createError = require('http-errors');
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const url = require('url');
+const faker = require('faker');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -14,7 +16,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
+const wsRouter = (ws, req) => {
+  const pathname = url.parse(req.url, true).pathname;
+
+  if (pathname === '/users') {
+    usersRouter(ws);
+  } else {
+    ws.close(1000, 'Not Found');
+  }
+}
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -32,4 +43,4 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+module.exports = {app, wsRouter};
